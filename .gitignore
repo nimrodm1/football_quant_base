@@ -1,0 +1,21 @@
+# --- System & IDE ---
+.vscode/
+.DS_Store
+*.swp
+
+# --- Python & Testing ---
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+dist/
+build/
+*.egg-info/
+
+# --- Sync & Temporary Files ---
+.tmp_drive*
+*.zip
+*.tar.gz
+*.log
+
+# --- Data (Don't track big files) ---
+data/*.csv
