@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 
 class Market(Enum):
@@ -46,7 +46,7 @@ class DataConfig:
         "PCAHH": "PCAHH", "PCAHA": "PCAHA",
         "MaxCAHH": "MaxCAHH", "MaxCAHA": "MaxCAHA",
         "AvgCAHH": "AvgCAHH", "AvgCAHA": "AvgCAHA"
-    })
+    })    
     DATE_FORMATS: List[str] = field(default_factory=lambda: ["%d/%m/%y", "%d/%m/%Y"])
     TIME_FORMAT: str = "%H:%M"
     ODDS_COL_PATTERNS: Dict[Market, Dict[str, Dict[str, str]]] = field(default_factory=lambda: {
@@ -121,3 +121,12 @@ class DataConfig:
         "MaxCAHH": "float64", "MaxCAHA": "float64",
         "AvgCAHH": "float64", "AvgCAHA": "float64"
     })
+
+@dataclass
+class FeatureConfig(DataConfig):
+    feature_list: List[str] = field(default_factory=list)
+    time_decay_scaling_factor: float = 0.0
+    reference_date_for_decay: str = ""
+    implied_prob_bookmakers_match_odds: List[str] = field(default_factory=list)
+    implied_prob_bookmakers_over_under: List[str] = field(default_factory=list)
+    closing_odds_preferred_provider: Optional[str] = None
