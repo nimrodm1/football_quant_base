@@ -2,7 +2,9 @@ import pytest
 import pandas as pd
 import io
 from datetime import datetime
-
+import sys
+import os
+sys.path.append(os.path.join(os.getcwd(), 'src'))
 from quant_football.core.config import DataConfig, Market
 from quant_football.data.data_loader import DataLoader
 from quant_football.data.preprocessor import Preprocessor

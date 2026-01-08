@@ -4,9 +4,9 @@ import re
 from typing import Dict, List, Any, Optional
 
 from quant_football.core.config import FeatureConfig, Market
-from quant_football.utils.logger import get_logger
+from quant_football.utils.logger import logger
 
-logger = get_logger(__name__)
+#logger = logger(__name__)
 
 class OddsFeatureEngineer:
     def __init__(self, config: FeatureConfig):
