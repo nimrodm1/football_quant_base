@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quant_football"
+version = "0.1.0"
+description = "Bayesian modelling and football market analysis"
+readme = "README.md"
+requires-python = ">=3.10"
+# These matches the versions we discussed for local stability
+dependencies = [
+    "numpy==1.26.4",
+    "pandas>=2.0.0",
+    "pymc>=5.16.2",
+    "arviz>=0.18.0",
+    "pytensor>=2.22.1",
+    "xarray>=2024.1.0",
+    "matplotlib",
+    "scipy"
+]
+
+[tool.setuptools.packages.find]
+# This tells Python that the code lives in 'src' and the 
+# package name is the folder inside it ('quant_football')
+where = ["src"]
+
+[tool.pytest.ini_options]
+# This allows you to just type 'pytest' and it will know where to look
+testpaths = ["tests"]
+pythonpath = ["src"]
