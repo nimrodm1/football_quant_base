@@ -24,29 +24,34 @@ class BayesianPoissonGLMM(BaseModel):
         self.trace = None
 
     def _prepare_data_indices(self, data: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        # Identify unique teams and create mappings
-        teams = sorted(pd.concat([data['HomeTeam'], data['AwayTeam']]).unique())
-        self.teams_mapping = {team: i for i, team in enumerate(teams)}
-        self.inv_teams_mapping = {i: team for team, i in self.teams_mapping.items()}
-        self.n_teams = len(teams)
-
-        h_idx = data['HomeTeam'].map(self.teams_mapping).values
-        a_idx = data['AwayTeam'].map(self.teams_mapping).values
+        """
+        Extracts pre-mapped indices and calculates time decay values.
+        Assumes clean_and_standardise has already been run.
+        """
+        # 1. Direct Extraction (Will throw KeyError if Preprocessor failed)
+        h_idx = data['home_team_idx'].values
+        a_idx = data['away_team_idx'].values
         h_goals = data['FTHG'].values
         a_goals = data['FTAG'].values
+        match_dates = data['match_date']
 
-        if 'Date' in data.columns:
-            dates = pd.to_datetime(data['Date'], dayfirst=True, errors='coerce')
-            if dates.isna().all():
-                 delta_t = np.zeros(len(data))
-            else:
-                last_date = dates.max()
-                delta_t = (last_date - dates).dt.days.values / 30.0
-        else:
-            delta_t = np.zeros(len(data))
-        
-        return h_idx.astype(int), a_idx.astype(int), h_goals.astype(int), a_goals.astype(int), delta_t
+        # 2. Global Indexing Size
+        # We use the mapping stored in the model instance to define the vector shape
+        self.n_teams = len(self.teams_mapping)
 
+        # 3. Time Decay (Delta T)
+        # Calculated as months (30-day blocks) from the most recent match in the dataset
+        last_date = match_dates.max()
+        delta_t = (last_date - match_dates).dt.days.values / 30.0
+    
+        return (
+            h_idx.astype(int), 
+            a_idx.astype(int), 
+            h_goals.astype(int), 
+            a_goals.astype(int), 
+            delta_t
+        )
+    
     def _build_model(self, h_idx: np.ndarray, a_idx: np.ndarray, 
                      h_goals: np.ndarray, a_goals: np.ndarray, 
                      delta_t: np.ndarray):
@@ -97,8 +102,10 @@ class BayesianPoissonGLMM(BaseModel):
             
         return model
 
-    def fit(self, data: pd.DataFrame, **kwargs):
+    def fit(self, data: pd.DataFrame, teams_mapping: Dict[str, int], **kwargs):
         logger.info(f"Fitting BayesianPoissonGLMM with {len(data)} matches.")
+        self.teams_mapping = teams_mapping
+        self.inv_teams_mapping = {v: k for k, v in teams_mapping.items()}
         h_idx, a_idx, h_goals, a_goals, delta_t = self._prepare_data_indices(data)
         
         self.model = self._build_model(h_idx, a_idx, h_goals, a_goals, delta_t)
