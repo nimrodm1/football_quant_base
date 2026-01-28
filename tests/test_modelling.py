@@ -34,11 +34,28 @@ def mock_data():
 
 @pytest.fixture
 def fitted_model(mock_data):
+    # 1. Clean the mock data to match the expected format
+    # The model expects 'home_team_idx', 'away_team_idx', and 'match_date'
+    df = mock_data.copy()
+    df['match_date'] = pd.to_datetime(df['Date'], dayfirst=True)
+    
+    # 2. Create the mapping manually (simulating the DataLoader/Preprocessor agent)
+    teams = sorted(list(set(df['HomeTeam']) | set(df['AwayTeam'])))
+    mapping = {team: i for i, team in enumerate(teams)}
+    
+    # 3. Add the required index columns
+    df['home_team_idx'] = df['HomeTeam'].map(mapping)
+    df['away_team_idx'] = df['AwayTeam'].map(mapping)
+    
     config = ModellingConfig()
-    # Minimizing sampling for test speed
+    # Minimising sampling for test speed
     config.sampling = {"draws": 100, "tune": 100, "chains": 1, "random_seed": 42}
+    
     model = BayesianPoissonGLMM(config=vars(config))
-    model.fit(mock_data)
+    
+    # 4. Pass the data AND the mapping
+    model.fit(df, teams_mapping=mapping)
+    
     return model
 
 def test_sum_to_zero_constraint(fitted_model):
