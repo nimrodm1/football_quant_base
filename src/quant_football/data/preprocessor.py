@@ -20,7 +20,8 @@ class Preprocessor:
         df = self._parse_dates(df)
         df = self._enforce_schema(df)
         df = self._validate_critical_data(df)
-    
+        df, team_map = self.map_teams_to_ids(df)
+        self.teams_mapping = team_map
         if 'match_date' in df.columns:
             df.sort_values(by='match_date', inplace=True, ignore_index=True)
         # At the very end of clean_and_standardise:

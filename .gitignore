@@ -2,7 +2,7 @@
 .vscode/
 .DS_Store
 *.swp
-
+.env
 # --- Python & Testing ---
 __pycache__/
 .pytest_cache/
@@ -10,6 +10,7 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+test_notebook.ipynb
 
 # --- Sync & Temporary Files ---
 .tmp_drive*

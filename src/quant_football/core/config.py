@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass, field
 
 class Market(Enum):
@@ -46,7 +46,7 @@ class DataConfig:
         "PCAHH": "PCAHH", "PCAHA": "PCAHA",
         "MaxCAHH": "MaxCAHH", "MaxCAHA": "MaxCAHA",
         "AvgCAHH": "AvgCAHH", "AvgCAHA": "AvgCAHA"
-    })    
+    })
     DATE_FORMATS: List[str] = field(default_factory=lambda: ["%d/%m/%y", "%d/%m/%Y"])
     TIME_FORMAT: str = "%H:%M"
     ODDS_COL_PATTERNS: Dict[Market, Dict[str, Dict[str, str]]] = field(default_factory=lambda: {
@@ -77,7 +77,7 @@ class DataConfig:
             }
         }
     })
-    MISSING_VALUE_PLACEHOLDERS: List[Any] = field(default_factory=lambda: ["", "#VALUE!", "-", "None", "N/A", 'NA']) # Added 'NA' as per mock data
+    MISSING_VALUE_PLACEHOLDERS: List[Any] = field(default_factory=lambda: ["", "#VALUE!", "-", "None", "N/A", 'NA']) 
     CRITICAL_COLUMNS: List[str] = field(default_factory=lambda: ["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG"])
     TEAM_NAME_MAPPING: Dict[str, str] = field(default_factory=lambda: {
         "Man United": "Man Utd", "Arsenal FC": "Arsenal", "Leicester": "Leicester City"
@@ -127,6 +127,27 @@ class FeatureConfig(DataConfig):
     feature_list: List[str] = field(default_factory=list)
     time_decay_scaling_factor: float = 0.0
     reference_date_for_decay: str = ""
-    implied_prob_bookmakers_match_odds: List[str] = field(default_factory=list)
-    implied_prob_bookmakers_over_under: List[str] = field(default_factory=list)
-    closing_odds_preferred_provider: Optional[str] = None
+    implied_prob_bookmakers_match_odds: List[str] = field(default_factory=lambda: ["B365", "PS", "Avg"])
+    implied_prob_bookmakers_over_under: List[str] = field(default_factory=lambda: ["B365", "P", "Avg"])
+    closing_odds_preferred_provider: Optional[str] = "PS"
+
+@dataclass
+class ModellingConfig(FeatureConfig):
+    sampling: Dict[str, Any] = field(default_factory=lambda: {
+        "draws": 1000,
+        "tune": 1000,
+        "chains": 4,
+        "target_accept": 0.95,
+        "random_seed": 42
+    })
+    priors: Dict[str, Dict[str, float]] = field(default_factory=lambda: {
+        "mu": {"mean": 0.0, "sd": 1.0},
+        "h_adv": {"mean": 0.3, "sd": 0.2},
+        "sigma_att": {"sd": 0.5},
+        "sigma_def": {"sd": 0.5},
+        "alpha": {"sd": 0.1}
+    })
+    prediction: Dict[str, Any] = field(default_factory=lambda: {
+        "max_goals": 10,
+        "n_samples": 2000
+    })

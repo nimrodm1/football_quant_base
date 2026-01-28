@@ -9,6 +9,7 @@ class DataLoader:
     def __init__(self, config: DataConfig):
         self.config = config
         self.preprocessor = Preprocessor(config)
+        self.teams_mapping = {}
 
     def _read_csv(self, file_path: str) -> pd.DataFrame:
         logger.info(f"Reading file: {file_path}")
@@ -44,5 +45,5 @@ class DataLoader:
         
         # Orchestrate the preprocessing steps exactly as the tests expect
         combined_df = self.preprocessor.clean_and_standardise(combined_df)
-        
+        self.teams_mapping = self.preprocessor.teams_mapping
         return combined_df
