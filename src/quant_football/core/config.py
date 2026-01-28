@@ -151,3 +151,12 @@ class ModellingConfig(FeatureConfig):
         "max_goals": 10,
         "n_samples": 2000
     })
+
+@dataclass
+class StrategyConfig(ModellingConfig):
+    name: str = "kelly_optimal"
+    value_bet_threshold: float = 0.02
+    max_match_exposure: float = 0.05
+    kelly_fraction_k: float = 0.25
+    flat_stake_unit: float = 10.0
+    markets_to_monitor: List[str] = field(default_factory=lambda: ["MATCH_ODDS", "OVER_UNDER_2_5"])
