@@ -10,7 +10,6 @@ __pycache__/
 dist/
 build/
 *.egg-info/
-test_notebook.ipynb
 
 # --- Sync & Temporary Files ---
 .tmp_drive*

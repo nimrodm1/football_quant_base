@@ -22,9 +22,9 @@ class Preprocessor:
         df = self._validate_critical_data(df)
         df, team_map = self.map_teams_to_ids(df)
         self.teams_mapping = team_map
+        df = self._generate_match_ids(df)
         if 'match_date' in df.columns:
             df.sort_values(by='match_date', inplace=True, ignore_index=True)
-        # At the very end of clean_and_standardise:
         cols_to_drop = ['Date', 'Time']
         df.drop(columns=[c for c in cols_to_drop if c in df.columns], inplace=True)
         return df
@@ -126,6 +126,20 @@ class Preprocessor:
         df['away_team_idx'] = df['AwayTeam'].astype(str).map(team_to_id_map).astype(pd.Int64Dtype())
         
         return df, team_to_id_map
+    
+    def _generate_match_ids(self,df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Creates a unique, deterministic ID for every match.
+        Example output: '20260129_arsenal_chelsea'
+        """
+        df = df.copy()
+        # Clean team names: lowercase and remove spaces
+        h = df['HomeTeam'].str.lower().str.replace(' ', '')
+        a = df['AwayTeam'].str.lower().str.replace(' ', '')
+        d = pd.to_datetime(df['match_date']).dt.strftime('%Y%m%d')
+    
+        df['match_id'] = d + "_" + h + "_" + a
+        return df
 
     def get_market_odds_columns(self, df: pd.DataFrame, market_type: Market) -> Dict[str, List[str]]:
         patterns = self.config.ODDS_COL_PATTERNS.get(market_type, {})
