@@ -7,8 +7,8 @@ import numpy as np
 import arviz as az
 import warnings
 
-from quant_football.modelling.bayesian_poisson_glmm import BayesianPoissonGLMM
-from quant_football.core.config import ModellingConfig
+from quant_football.modelling import BayesianPoissonGLMM, MatchPrediction
+from quant_football.core.config import ModellingConfig, Market
 import pymc as pm
 
 import warnings
@@ -68,20 +68,28 @@ def test_sum_to_zero_constraint(fitted_model):
     assert abs(np.sum(defs_mean)) < 1e-10
 
 def test_predict_probabilities_format(fitted_model):
-    """QA Check: Predictive Distribution Format and Sum."""
+    # 1. Arrange: Create the input DataFrame with your new match_id
     matches = pd.DataFrame([
-        {"HomeTeam": "Arsenal", "AwayTeam": "Chelsea"},
-        {"HomeTeam": "Man City", "AwayTeam": "Liverpool"}
+        {"match_id": "m1", "HomeTeam": "Arsenal", "AwayTeam": "Chelsea"},
+        {"match_id": "m2", "HomeTeam": "Man City", "AwayTeam": "Liverpool"}
     ])
-    probs = fitted_model.predict_outcome_probabilities(matches)
     
-    assert isinstance(probs, pd.DataFrame)
-    expected_cols = ["home_win", "draw", "away_win", "over_2_5", "under_2_5"]
-    assert all(col in probs.columns for col in expected_cols)
+    # 2. Act: Call the model
+    predictions = fitted_model.predict_outcome_probabilities(matches)
     
-    row_sums = probs[["home_win", "draw", "away_win"]].sum(axis=1)
-    np.testing.assert_allclose(row_sums, 1.0, atol=1e-5)
-
+    # 3. Assert: Check the DOMAIN OBJECTS, not the DataFrame
+    assert isinstance(predictions, list)
+    assert len(predictions) == 2
+    assert isinstance(predictions[0], MatchPrediction)
+    
+    # Verify the ID was preserved
+    assert predictions[0].match_id == "m1"
+    
+    # Check probability maths for one market
+    match_odds = predictions[0].probabilities[Market.MATCH_ODDS]
+    total_prob = sum(match_odds.values())
+    assert pytest.approx(total_prob) == 1.0
+    
 def test_model_structure(fitted_model):
     """Verify that the model variables exist and have the correct dimensions."""
     vars_in_trace = fitted_model.trace.posterior.data_vars

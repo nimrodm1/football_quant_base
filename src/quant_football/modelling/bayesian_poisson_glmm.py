@@ -5,7 +5,7 @@ import arviz as az
 from typing import Dict, Any, Optional, Tuple
 from .base_model import BaseModel, MatchPrediction
 from quant_football.utils.logger import logger
-from quant_football.core.config import Market
+from quant_football.core.config import Market, Outcomes
 
 class BayesianPoissonGLMM(BaseModel):
     """
@@ -169,13 +169,13 @@ class BayesianPoissonGLMM(BaseModel):
             
             probs = {
                 Market.MATCH_ODDS: {
-                    "home": float(np.mean(h_s > a_s)),
-                    "draw": float(np.mean(h_s == a_s)),
-                    "away": float(np.mean(h_s < a_s))
+                    Outcomes.HOME_WIN: float(np.mean(h_s > a_s)),
+                    Outcomes.DRAW: float(np.mean(h_s == a_s)),
+                    Outcomes.AWAY_WIN: float(np.mean(h_s < a_s))
                 },
                 Market.OVER_UNDER_2_5: {
-                    "over": float(np.mean((h_s + a_s) > 2.5)),
-                    "under": float(np.mean((h_s + a_s) < 2.5))
+                    Outcomes.OVER_25: float(np.mean((h_s + a_s) > 2.5)),
+                    Outcomes.UNDER_25: float(np.mean((h_s + a_s) < 2.5))
                 }
             }
             

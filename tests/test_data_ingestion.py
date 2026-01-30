@@ -69,7 +69,7 @@ E0,11/04/22,17:30,West Ham,Aston Villa,1,0,H,0,0,D,M Dean,10,9,4,3,11,12,5,4,1,1
         expected_columns = list(mock_config.SCHEMA_DATA_TYPES.keys())
         # The ingestion logic should ensure all expected columns are present, even if some are entirely NA.
         # Added 'match_date', 'home_team_idx', 'away_team_idx' that are created during preprocessing
-        expected_columns.extend(['match_date', 'home_team_idx', 'away_team_idx'])
+        expected_columns.extend(['match_date', 'home_team_idx', 'away_team_idx', 'match_id'])
         
         # Remove 'Date' and 'Time' as they are replaced by 'match_date'
         if 'Date' in expected_columns:

@@ -7,6 +7,13 @@ class Market(Enum):
     OVER_UNDER_2_5 = "OVER_UNDER_2_5"
     ASIAN_HANDICAP = "ASIAN_HANDICAP"
 
+class Outcomes(Enum):
+    HOME_WIN = "home_win"
+    DRAW = "draw"
+    AWAY_WIN = "away_win"
+    OVER_25 = "over"
+    UNDER_25 = "under"
+
 @dataclass
 class DataConfig:
     RAW_COL_MAP: Dict[str, str] = field(default_factory=lambda: {

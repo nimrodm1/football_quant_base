@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from quant_football.core.config import Market 
+from quant_football.core.config import Market, Outcomes
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional
 import pandas as pd
@@ -11,7 +11,7 @@ class MatchPrediction:
     away_team: str
     # Market name -> Outcome -> Probability
     # e.g., {"1X2": {"home_win": 0.45, "draw": 0.25, ...}, "OU2.5": {"over": 0.55, ...}}
-    probabilities: Dict[Market, Dict[str, float]] 
+    probabilities: Dict[Market, Dict[Outcomes, float]] 
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def flatten(self) -> List[Dict[str, Any]]:
@@ -45,7 +45,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def predict_outcome_probabilities(self, home_team: str, away_team: str, **kwargs) -> Dict[str, float]:
+    def predict_outcome_probabilities(self, home_team: str, away_team: str, **kwargs) -> List[MatchPrediction]:
         """
         Predict outcome probabilities (Home, Draw, Away) for a given match.
         """
