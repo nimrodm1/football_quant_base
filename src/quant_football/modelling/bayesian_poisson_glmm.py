@@ -3,8 +3,9 @@ import pandas as pd
 import numpy as np
 import arviz as az
 from typing import Dict, Any, Optional, Tuple
-from .base_model import BaseModel
+from .base_model import BaseModel, MatchPrediction
 from quant_football.utils.logger import logger
+from quant_football.core.config import Market, Outcomes
 
 class BayesianPoissonGLMM(BaseModel):
     """
@@ -161,19 +162,30 @@ class BayesianPoissonGLMM(BaseModel):
         sim_h = np.random.poisson(l_h[indices, :])
         sim_a = np.random.poisson(l_a[indices, :])
         
-        results = []
-        for i in range(len(matches)):
+        predictions = []
+        for i, (_, row) in enumerate(matches.iterrows()):
             h_s = sim_h[:, i]
             a_s = sim_a[:, i]
-            results.append({
-                "home_win": float(np.mean(h_s > a_s)),
-                "draw": float(np.mean(h_s == a_s)),
-                "away_win": float(np.mean(h_s < a_s)),
-                "over_2_5": float(np.mean((h_s + a_s) > 2.5)),
-                "under_2_5": float(np.mean((h_s + a_s) < 2.5))
-            })
             
-        return pd.DataFrame(results)
+            probs = {
+                Market.MATCH_ODDS: {
+                    Outcomes.HOME_WIN: float(np.mean(h_s > a_s)),
+                    Outcomes.DRAW: float(np.mean(h_s == a_s)),
+                    Outcomes.AWAY_WIN: float(np.mean(h_s < a_s))
+                },
+                Market.OVER_UNDER_2_5: {
+                    Outcomes.OVER_25: float(np.mean((h_s + a_s) > 2.5)),
+                    Outcomes.UNDER_25: float(np.mean((h_s + a_s) < 2.5))
+                }
+            }
+            
+            predictions.append(MatchPrediction(
+                match_id=str(row['match_id']),
+                home_team=row['HomeTeam'],
+                away_team=row['AwayTeam'],
+                probabilities=probs
+            ))
+        return predictions
 
     def save(self, path: str):
         if self.trace is not None:

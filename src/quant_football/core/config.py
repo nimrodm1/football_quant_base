@@ -7,6 +7,13 @@ class Market(Enum):
     OVER_UNDER_2_5 = "OVER_UNDER_2_5"
     ASIAN_HANDICAP = "ASIAN_HANDICAP"
 
+class Outcomes(Enum):
+    HOME_WIN = "home_win"
+    DRAW = "draw"
+    AWAY_WIN = "away_win"
+    OVER_25 = "over"
+    UNDER_25 = "under"
+
 @dataclass
 class DataConfig:
     RAW_COL_MAP: Dict[str, str] = field(default_factory=lambda: {
@@ -151,3 +158,12 @@ class ModellingConfig(FeatureConfig):
         "max_goals": 10,
         "n_samples": 2000
     })
+
+@dataclass
+class StrategyConfig(ModellingConfig):
+    name: str = "kelly_optimal"
+    value_bet_threshold: float = 0.02
+    max_match_exposure: float = 0.05
+    kelly_fraction_k: float = 0.25
+    flat_stake_unit: float = 10.0
+    markets_to_monitor: List[str] = field(default_factory=lambda: ["MATCH_ODDS", "OVER_UNDER_2_5"])
