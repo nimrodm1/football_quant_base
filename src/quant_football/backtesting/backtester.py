@@ -122,6 +122,9 @@ class Backtester:
                             self.history.append({
                                 "match_id": pred.match_id,
                                 "date": current_date,
+                                "home_team": row['HomeTeam'], 
+                                "away_team": row['AwayTeam'],  
+                                "league": row.get('Div', 'Unknown'),
                                 "market": market.value,
                                 "outcome": outcome.value,
                                 "prob": prob,
@@ -150,6 +153,9 @@ class Backtester:
                 self.history.append({
                     "match_id": bet.match_id,
                     "date": current_date,
+                    "home_team": row['HomeTeam'], 
+                    "away_team": row['AwayTeam'],  
+                    "league": row.get('Div', 'Unknown'),
                     "market": bet.market,
                     "outcome": bet.outcome,
                     "odds": bet.odds,
