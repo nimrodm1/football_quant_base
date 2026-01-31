@@ -141,3 +141,12 @@ def test_strategy_filters_negative_ev_integration():
     bets = strategy.generate_bets([prediction], [odds], 1000.0)
     
     assert len(bets) == 0
+
+def test_strategy_handles_missing_odds():
+    # Prediction exists, but no Odds object provided for this match_id
+    pred = MatchPrediction(match_id="M1", home_team="A", away_team="B", probabilities={...})
+    strategy = KellyOptimalStrategy()
+    
+    # Should return empty list, not crash
+    bets = strategy.generate_bets([pred], [], 1000.0) 
+    assert len(bets) == 0
