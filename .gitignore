@@ -19,3 +19,4 @@ build/
 
 # --- Data (Don't track big files) ---
 data/*.csv
+test_notebook.ipynb

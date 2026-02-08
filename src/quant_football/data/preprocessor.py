@@ -91,6 +91,7 @@ class Preprocessor:
             if dtype:
                 if dtype == "string":
                     df[col] = df[col].astype(str).replace(['nan', 'None', '<NA>', ''], pd.NA).astype(pd.StringDtype())
+                    #df[col] = df[col].astype(str).replace(['nan', 'None', '<NA>', ''], pd.NA)
                 elif dtype in ["Int64", "float64"]:
                     df[col] = pd.to_numeric(df[col], errors='coerce')
                     if dtype == "Int64":

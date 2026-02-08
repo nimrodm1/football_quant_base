@@ -167,3 +167,13 @@ class StrategyConfig(ModellingConfig):
     kelly_fraction_k: float = 0.25
     flat_stake_unit: float = 10.0
     markets_to_monitor: List[str] = field(default_factory=lambda: ["MATCH_ODDS", "OVER_UNDER_2_5"])
+
+@dataclass
+class BacktestConfig(StrategyConfig):
+    initial_bankroll: float = 1000.0
+    training_window_months: int = 24
+    min_training_data_points: int = 100
+    retrain_frequency: int = 7
+    default_odds_provider_pre_match: str = "Avg"
+    default_odds_provider_close: str = "PS"
+    eval_metrics: List[str] = field(default_factory=lambda: ["roi", "pnl", "brier_score", "log_loss", "clv_score"])

@@ -1,0 +1,39 @@
+name: football_quant
+channels:
+  - conda-forge
+dependencies:
+  # Core scientific computing
+  - python=3.11
+  - numpy=1.26.4
+  - pandas==2.2.3
+  - scipy
+  - matplotlib
+  
+  # Bayesian modeling
+  - pymc>=5.16.2
+  - arviz>=0.18.0
+  - pytensor>=2.22.1
+  - xarray>=2024.1.0
+  
+  # Performance & JIT compilation
+  - numba
+  - nutpie
+  - tbb
+  - mkl
+  - libblas
+  # Development & testing
+  - jupyter
+  - pytest
+  - pytest-cov
+  
+# Modern Windows compilers for PyMC/PyTensor
+  - c-compiler
+  - cxx-compiler
+  - libpython
+  
+  # Optional but recommended
+  - pip
+  
+pip:
+  # Your local package in development mode
+  - -e .
