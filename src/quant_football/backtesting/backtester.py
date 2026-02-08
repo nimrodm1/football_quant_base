@@ -1,7 +1,10 @@
+from contextlib import closing
 import pandas as pd
 import numpy as np
 from datetime import timedelta
 from typing import List, Dict, Any, Optional
+
+from pyparsing import col
 from quant_football.core.config import BacktestConfig, Market, Outcomes
 from quant_football.modelling.base_model import MatchPrediction
 from quant_football.strategy.base_strategy import BaseStrategy, MatchOdds, Bet
@@ -48,7 +51,9 @@ class Backtester:
                 train_data = self._get_training_window(self.current_sim_date, processed_df)
                 if len(train_data) >= self.config.min_training_data_points:
                     logger.info(f"Retraining model on {self.current_sim_date} with {len(train_data)} samples.")
-                    self.model_pipeline.train(train_data)
+                    global_mapping = self.data_pipeline.teams_mapping
+                    self.model_pipeline.train(train_data, teams_mapping=global_mapping)
+                    logger.info("Model retrained successfully.")
                     last_retrain_date = self.current_sim_date
 
             # 2. Daily Matches
@@ -65,6 +70,7 @@ class Backtester:
                 "date": self.current_sim_date,
                 "bankroll": self.bankroll
             })
+            logger.info(f"Date: {self.current_sim_date.date()}, Bankroll: {self.bankroll:.2f}, Bets Placed: {len(daily_matches)}")
 
             self.current_sim_date += timedelta(days=1)
 
@@ -81,23 +87,18 @@ class Backtester:
         return df[(df['match_date'] < current_date) & (df['match_date'] >= cutoff)]
 
     def _process_daily_matches(self, matches: pd.DataFrame, current_date: pd.Timestamp, eval_only: bool):
-        predictions = []
+        # Get predictions for all matches at once
+        predictions = self.model_pipeline.predict(matches)
+        
+        # Create mappings for efficient lookup
+        pred_map = {p.match_id: p for p in predictions}
+        row_map = {row['match_id']: row for _, row in matches.iterrows()}
+        
         odds_list = []
         match_results = {}
         match_closing_odds = {}
 
-        for _, row in matches.iterrows():
-            pred_list = self.model_pipeline.predict(row['HomeTeam'], row['AwayTeam'])
-            match_id = row['match_id']
-            
-            # Bridge MatchPrediction match_id for mocks
-            for p in pred_list:
-                if p.match_id == "dummy":
-                    object.__setattr__(p, 'match_id', match_id)
-            
-            valid_preds = [p for p in pred_list if p.match_id == match_id]
-            predictions.extend(valid_preds)
-
+        for match_id, row in row_map.items():
             # Pre-match odds
             pre_match_odds_dict = self._extract_odds(row, closing=False)
             odds_list.append(MatchOdds(match_id=match_id, odds=pre_match_odds_dict))
@@ -113,6 +114,10 @@ class Backtester:
             # Eval Only Mode: Record all outcomes
             for pred in predictions:
                 result = match_results.get(pred.match_id)
+                row = row_map.get(pred.match_id)
+                if row is None:
+                    continue
+                    
                 mapping = {"H": Outcomes.HOME_WIN, "D": Outcomes.DRAW, "A": Outcomes.AWAY_WIN}
                 actual_outcome = mapping.get(result)
                 
@@ -139,6 +144,10 @@ class Backtester:
             bets = self.strategy.generate_bets(predictions, odds_list, self.bankroll)
 
             for bet in bets:
+                row = row_map.get(bet.match_id)
+                if row is None:
+                    continue
+                    
                 result = match_results.get(bet.match_id)
                 is_win = self._check_win(bet, result)
                 
@@ -174,12 +183,17 @@ class Backtester:
         else:
             provider = self.config.default_odds_provider_pre_match
             h_col, d_col, a_col = f"{provider}H", f"{provider}D", f"{provider}A"
-        
+    
+        # helper to handle both missing columns and NaN values
+        def get_val(col):
+            val = row.get(col, 0.0)
+            return float(val) if pd.notna(val) else 0.0
+
         return {
             Market.MATCH_ODDS: {
-                Outcomes.HOME_WIN: float(row.get(h_col, 0.0)),
-                Outcomes.DRAW: float(row.get(d_col, 0.0)),
-                Outcomes.AWAY_WIN: float(row.get(a_col, 0.0))
+                Outcomes.HOME_WIN: get_val(h_col),
+                Outcomes.DRAW: get_val(d_col),
+                Outcomes.AWAY_WIN: get_val(a_col)
             }
         }
 
@@ -201,6 +215,7 @@ class Backtester:
         total_pnl = results_df['pnl'].sum()
         
         metrics = {
+            'status': "success",
             "roi": total_pnl / total_staked if total_staked > 0 else 0,
             "pnl": total_pnl,
             "final_bankroll": self.bankroll,
